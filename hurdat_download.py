@@ -59,6 +59,9 @@ class Hurricane():
             return lfs
         else:
             return False
+    
+    def lifespan(self):
+        return (self.entries[0].date,self.entries[-1].date)
 
 @dataclass
 class Entry():
@@ -121,6 +124,9 @@ hurricanes_classed=[]
 for i in splt_hurricanes_raw:
     hurricanes_classed.append(Hurricane.from_splt_hur(i))
 
+for i in hurricanes_classed[-1].entries:
+    print(i)
+
 # Classify Hurriance classes into categories
 # hur_cat = []
 # for i in hurricanes_classed:
@@ -146,41 +152,52 @@ for i in splt_hurricanes_raw:
 #     hur_cat.append(hur_cat_ind)
 
 # Find max & min lat, long hurricane activity
-latmax = 0
-latmin = 180
-longmin = 0 # EAST
-longmax = 0 # WEST
-for hur in hurricanes_classed:
-    for entry in hur.entries:
-        if float(entry.coordinates[0][:-1]) > latmax:
-            max = float(entry.coordinates[0][:-1])
-        if float(entry.coordinates[0][:-1]) < latmin:
-            min = float(entry.coordinates[0][:-1])
-for hur in hurricanes_classed:
-    for entry in hur.entries:
-        if entry.coordinates[1][-1] == 'W' and float(entry.coordinates[1][:-1]) > longmin:
-            longmin = float(entry.coordinates[1][:-1])
-        elif entry.coordinates[1][-1] == 'E' and float(entry.coordinates[1][:-1]) > longmax:
-            longmax = float(entry.coordinates[1][:-1])
-print(max, min) # Range 7.0N - 70.7N
-print(longmin,longmax) # Range 136.9W - 13.5E
+def hur_activity_coords(hurricanes_Classed):
+    latmax = 0
+    latmin = 180
+    longmin = 0 # WEST
+    longmax = 0 # EAST
+    for hur in hurricanes_classed:
+        for entry in hur.entries:
+            if float(entry.coordinates[0][:-1]) > latmax:
+                latmax = float(entry.coordinates[0][:-1])
+            if float(entry.coordinates[0][:-1]) < latmin:
+                latmin = float(entry.coordinates[0][:-1])
+    for hur in hurricanes_classed:
+        for entry in hur.entries:
+            if entry.coordinates[1][-1] == 'W' and float(entry.coordinates[1][:-1]) > longmin:
+                longmin = float(entry.coordinates[1][:-1])
+            elif entry.coordinates[1][-1] == 'E' and float(entry.coordinates[1][:-1]) > longmax:
+                longmax = float(entry.coordinates[1][:-1])
+    return ((latmax, latmin),(longmin,longmax)) # Lat Range 7.0N - 70.7N, Long Range 136.9W - 13.5E
 
 # Find max & min lat, long hurricane birth
-latmax = 0
-longmax = 0
-latmin = 180
-longmin = 180
-for hur in hurricanes_classed:
-    if float(hur.entries[0].coordinates[0][:-1]) > latmax:
-        latmax = float(hur.entries[0].coordinates[0][:-1])
-    if float(hur.entries[0].coordinates[0][:-1]) < latmin:
-        latmin = float(hur.entries[0].coordinates[0][:-1])
-    if float(hur.entries[0].coordinates[1][:-1]) < longmin:
-        longmin = float(hur.entries[0].coordinates[1][:-1])
-    elif float(hur.entries[0].coordinates[1][:-1]) > longmax:
-        longmax = float(hur.entries[0].coordinates[1][:-1])
-print(latmin,latmax) # Range 7.0N - 47.2N
-print(longmin,longmax) # Range 97.4W - 16.8W
+def hur_birth_coords(hurricanes_classed):
+    latmax = 0
+    longmax = 0
+    latmin = 180
+    longmin = 180
+    for hur in hurricanes_classed:
+        if float(hur.entries[0].coordinates[0][:-1]) > latmax:
+            latmax = float(hur.entries[0].coordinates[0][:-1])
+        if float(hur.entries[0].coordinates[0][:-1]) < latmin:
+            latmin = float(hur.entries[0].coordinates[0][:-1])
+        if float(hur.entries[0].coordinates[1][:-1]) < longmin:
+            longmin = float(hur.entries[0].coordinates[1][:-1])
+        elif float(hur.entries[0].coordinates[1][:-1]) > longmax:
+            longmax = float(hur.entries[0].coordinates[1][:-1])
+    return((latmin,latmax),(longmin,longmax)) # Lat Range 7.0N - 47.2N, Long Range 97.4W - 16.8W
 
 
-
+# Hurricane season
+def hur_szn_bounds(hurricanes_classed):
+    mindate = datetime(1900,12,31)
+    maxdate = datetime(1900,1,1)
+    for hur in hurricanes_classed:
+        if hur.entries[0].date.month < mindate.month and hur.entries[0].date.day < mindate.day:
+            mindate = mindate.replace(month=hur.entries[0].date.month)
+            mindate = mindate.replace(day=hur.entries[0].date.day)
+        if hur.entries[-1].date.month > maxdate.month and hur.entries[-1].date.day > maxdate.day:
+            maxdate = maxdate.replace(month=hur.entries[-1].date.month)
+            maxdate = maxdate.replace(day=hur.entries[-1].date.day)
+    return(mindate,maxdate) # Range 06/02 - 10/31
